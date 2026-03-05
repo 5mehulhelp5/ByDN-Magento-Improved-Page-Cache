@@ -28,7 +28,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
     const PARAM_PRIORITY = 'priority';
 
     /**
-     * @var \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher
+     * @var \Bydn\ImprovedPageCache\Model\Queue\Publisher
      */
     private $warmer;
 
@@ -38,12 +38,12 @@ class Warm extends \Symfony\Component\Console\Command\Command
     private $logger;
 
     /**
-     * @param \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher $warmer
+     * @param \Bydn\ImprovedPageCache\Model\Queue\Publisher $warmer
      * @param \Psr\Log\LoggerInterface $logger
      * @param string|null $name
      */
     public function __construct(
-        \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher $warmer,
+        \Bydn\ImprovedPageCache\Model\Queue\Publisher $warmer,
         \Psr\Log\LoggerInterface $logger,
         ?string $name = null
     )
