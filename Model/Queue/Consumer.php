@@ -156,7 +156,8 @@ class Consumer
 
                 case WarmTypes::PAGES:
                     $page = $this->pageRepository->getById($info);
-                    return $store->getBaseUrl() . $page->getIdentifier();
+                    $identifier = $page->getIdentifier();
+                    return $store->getBaseUrl() . ($identifier == 'home' ? '' : $identifier);
 
                 case WarmTypes::PRODUCTS:
                     $parts = explode(',', $info);
