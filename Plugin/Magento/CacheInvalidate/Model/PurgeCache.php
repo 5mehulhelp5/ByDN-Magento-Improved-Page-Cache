@@ -12,6 +12,10 @@
 
 namespace Bydn\ImprovedPageCache\Plugin\Magento\CacheInvalidate\Model;
 
+use Bydn\ImprovedPageCache\Model\Queue\Publisher;
+use Bydn\ImprovedPageCache\Model\WarmItem\Types;
+use Bydn\ImprovedPageCache\Model\WarmItem\Priority;
+
 class PurgeCache
 {
     /**
@@ -32,7 +36,7 @@ class PurgeCache
     /**
      * @var \Bydn\ImprovedPageCache\Model\Queue\Publisher
      */
-    private $cacheWarmer;
+    private $publisher;
 
     /**
      * @var \Psr\Log\LoggerInterface
@@ -52,23 +56,29 @@ class PurgeCache
     private $categoryIds = [];
 
     /**
+     * List of CMS page IDs to refresh
+     * @var array
+     */
+    private $pageIds = [];
+
+    /**
      * @param \Magento\Framework\App\State $appState
      * @param \Magento\Framework\App\Request\Http $request
      * @param \Bydn\ImprovedPageCache\Helper\RequestInfo $requestInfo
-     * @param \Bydn\ImprovedPageCache\Model\Queue\Publisher $cacheWarmer
+     * @param Publisher $publisher
      * @param \Psr\Log\LoggerInterface $logger
      */
     public function __construct(
         \Magento\Framework\App\State $appState,
         \Magento\Framework\App\Request\Http $request,
         \Bydn\ImprovedPageCache\Helper\RequestInfo $requestInfo,
-        \Bydn\ImprovedPageCache\Model\Queue\Publisher $cacheWarmer,
+        Publisher $publisher,
         \Psr\Log\LoggerInterface $logger
     ) {
         $this->appState = $appState;
         $this->request = $request;
         $this->requestInfo = $requestInfo;
-        $this->cacheWarmer = $cacheWarmer;
+        $this->publisher = $publisher;
         $this->logger = $logger;
     }
 
@@ -89,8 +99,7 @@ class PurgeCache
         $newTags = [];
 
         // Show original tags
-        $this->logger->debug('Original tags: ');
-        $this->logger->debug($tags);
+        $this->logger->debug('Original tags: ' . json_encode($tags));
 
         try {
             // Area code is not set on setup:upgrade
@@ -112,19 +121,20 @@ class PurgeCache
         $actionName = $this->request->getActionName();
 
         // // Log request informacion for debug purposes
-        // if (!empty($areaCode))            { $this->logger->debug('Area: ' . $areaCode);                      }
-        // if (!empty($cronRunning))         { $this->logger->debug('Cron running: ' . $cronRunning);           }
-        // if (!empty($commandRunning))      { $this->logger->debug('Command running: ' . $commandRunning);     }
-        // if (!empty($indexerRunning))      { $this->logger->debug('Indexer running: ' . $indexerRunning);     }
-        // if (!empty($webapiMethodRunning)) { $this->logger->debug('WebApi method: ' . $webapiMethodRunning);  }
-        // if (!empty($controllerModule))    { $this->logger->debug('Controller module: ' . $controllerModule); }
-        // if (!empty($moduleName))          { $this->logger->debug('Module: ' . $moduleName);                  }
-        // if (!empty($controllerName))      { $this->logger->debug('Controller: ' . $controllerName);          }
-        // if (!empty($actionName))          { $this->logger->debug('Action: ' . $actionName);                  }
+        if (!empty($areaCode))            { $this->logger->debug('Area: ' . $areaCode);                      }
+        if (!empty($cronRunning))         { $this->logger->debug('Cron running: ' . $cronRunning);           }
+        if (!empty($commandRunning))      { $this->logger->debug('Command running: ' . $commandRunning);     }
+        if (!empty($indexerRunning))      { $this->logger->debug('Indexer running: ' . $indexerRunning);     }
+        if (!empty($webapiMethodRunning)) { $this->logger->debug('WebApi method: ' . $webapiMethodRunning);  }
+        if (!empty($controllerModule))    { $this->logger->debug('Controller module: ' . $controllerModule); }
+        if (!empty($moduleName))          { $this->logger->debug('Module: ' . $moduleName);                  }
+        if (!empty($controllerName))      { $this->logger->debug('Controller: ' . $controllerName);          }
+        if (!empty($actionName))          { $this->logger->debug('Action: ' . $actionName);                  }
 
         // Extract product and category tags
         $this->extractProductIds($tags);
         $this->extractCategoryIds($tags);
+        $this->extractPageIds($tags);
 
         // Process tags and skip some of them
         foreach ($tags as $currentTag) {
@@ -145,8 +155,14 @@ class PurgeCache
                 $skipTag = true;
             }
 
+            // Avoid pages and enqueue them
+            if (stripos($currentTag, 'cms_p')) {
+                $skipTag = true;
+            }
+
             // Filter all cms blocks as it invalidate most of the products and categories
-            if (stripos($currentTag, 'cms_b')) {$this->enqueueCommonPages(true);
+            if (stripos($currentTag, 'cms_b')) {
+                $this->enqueueCommonPages(true);
                 $skipTag = true;
             }
 
@@ -162,11 +178,11 @@ class PurgeCache
 
         // Enqueue all products and categories
         // Categories will be outdated longer but it is not a good idea to refresh all of the category pages because one product has changed
-        $this->enqueueProductIdsWithPriority(true);
-        $this->enqueueCategoryIdsWithPriority(false);
+        $this->enqueueProductIds(Priority::HIGH);
+        $this->enqueueCategoryIds(Priority::MEDIUM);
+        $this->enqueuePageIds(Priority::HIGH);
 
-        $this->logger->debug('Cache tags invalidating');
-        $this->logger->debug($newTags);
+        $this->logger->debug('Cache tags invalidating: ' . json_encode($newTags));
 
         return [$newTags];
     }
@@ -252,17 +268,50 @@ class PurgeCache
     }
 
     /**
+     * Return CMS page Ids to refresh
+     *
+     * @param $tags
+     * @return array|void
+     */
+    private function extractPageIds($tags) {
+
+        // Si no hay tags de borrado de caché, no podemos hacer nada
+        if (!is_array($tags)) return [];
+
+        // As string for the regex processing
+        $tags = implode('#', $tags);
+
+        // Restart result array
+        $this->pageIds = [];
+
+        $pageMatches = [];
+        preg_match_all('/cms_p_([0-9]+)/', $tags, $pageMatches);
+        foreach ($pageMatches as $match) {
+            foreach ($match as $id) {
+                if (is_numeric($id)) {
+                    $this->pageIds[] = $id;
+                }
+            }
+        }
+
+        $this->logger->debug('CMS Page matches:');
+        $this->logger->debug(json_encode($this->pageIds));
+
+        return $this->pageIds;
+    }
+
+    /**
      * Enqueue extracted product IDs with high priority
      * @return void
      * @throws \Magento\Setup\Exception
      */
-    private function enqueueProductIdsWithPriority($priority) {
+    private function enqueueProductIds($priority) {
         if (!empty($this->productIds)) {
-            $this->cacheWarmer->sendEntitiesToQueue(
-                \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
-                \Bydn\ImprovedPageCache\Model\WarmItem\Types::PRODUCTS,
+            $this->publisher->sendEntitiesToQueue(
+                Publisher::ALL,
+                Types::PRODUCTS,
                 $this->productIds,
-                $priority ? \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH : \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST);
+                $priority);
         }
     }
 
@@ -271,13 +320,28 @@ class PurgeCache
      * @return void
      * @throws \Magento\Setup\Exception
      */
-    private function enqueueCategoryIdsWithPriority($priority) {
+    private function enqueueCategoryIds($priority) {
         if (!empty($this->categoryIds)) {
-            $this->cacheWarmer->sendEntitiesToQueue(
-                \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
-                \Bydn\ImprovedPageCache\Model\WarmItem\Types::CATEGORIES,
+            $this->publisher->sendEntitiesToQueue(
+                Publisher::ALL,
+                Types::CATEGORIES,
                 $this->categoryIds,
-                $priority ? \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH : \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST);
+                $priority);
+        }
+    }
+
+    /**
+     * Enqueue extracted CMS page IDs with high priority
+     * @return void
+     * @throws \Magento\Setup\Exception
+     */
+    private function enqueuePageIds($priority) {
+        if (!empty($this->pageIds)) {
+            $this->publisher->sendEntitiesToQueue(
+                Publisher::ALL,
+                Types::PAGES,
+                $this->pageIds,
+                $priority);
         }
     }
 
@@ -287,13 +351,13 @@ class PurgeCache
      * @throws \Magento\Setup\Exception
      */
     private function enqueueCommonPages($priority) {
-        $this->cacheWarmer->sendEntitiesToQueue(
-            \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
-            \Bydn\ImprovedPageCache\Model\WarmItem\Types::DIRECT_URL,
-            [
-                '',
-                'promocion',
-            ],
-            $priority ? \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH : \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST);
+        // $this->publisher->sendEntitiesToQueue(
+        //     Publisher::ALL,
+        //     Types::DIRECT_URL,
+        //     [
+        //         '',
+        //     ],
+        //     $priority ? Priority::HIGH : Priority::LOWEST);
     }
+
 }
