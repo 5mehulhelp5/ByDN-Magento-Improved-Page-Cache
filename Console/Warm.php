@@ -146,7 +146,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
         // Send required entities to warm queue
         $this->warmer->sendEntitiesToQueue($stores, $type, $warmData);
 
-        $output->writeln(sprintf('<info>Successfully added "%s" to the warming queue.</info>', $type));
+        $output->writeln(sprintf('Successfully added "%s" to the warming queue.', $type));
 
         return \Symfony\Component\Console\Command\Command::SUCCESS;
     }
