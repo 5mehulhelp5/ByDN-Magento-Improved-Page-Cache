@@ -1,4 +1,14 @@
 <?php
+/**
+ * @package     Bydn_ImprovedPageCache
+ * @author      Daniel Navarro <https://github.com/danidnm>
+ * @license     GPL-3.0-or-later
+ * @copyright   Copyright (c) 2025 Daniel Navarro
+ *
+ * This file is part of a free software package licensed under the
+ * GNU General Public License v3.0.
+ * You may redistribute and/or modify it under the same license.
+ */
 
 namespace Bydn\ImprovedPageCache\Plugin\Magento\CacheInvalidate\Model;
 
@@ -20,7 +30,7 @@ class PurgeCache
     private $requestInfo;
 
     /**
-     * @var \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher
+     * @var \Bydn\ImprovedPageCache\Model\Queue\Publisher
      */
     private $cacheWarmer;
 
@@ -45,14 +55,14 @@ class PurgeCache
      * @param \Magento\Framework\App\State $appState
      * @param \Magento\Framework\App\Request\Http $request
      * @param \Bydn\ImprovedPageCache\Helper\RequestInfo $requestInfo
-     * @param \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher $cacheWarmer
+     * @param \Bydn\ImprovedPageCache\Model\Queue\Publisher $cacheWarmer
      * @param \Psr\Log\LoggerInterface $logger
      */
     public function __construct(
         \Magento\Framework\App\State $appState,
         \Magento\Framework\App\Request\Http $request,
         \Bydn\ImprovedPageCache\Helper\RequestInfo $requestInfo,
-        \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher $cacheWarmer,
+        \Bydn\ImprovedPageCache\Model\Queue\Publisher $cacheWarmer,
         \Psr\Log\LoggerInterface $logger
     ) {
         $this->appState = $appState;
@@ -249,10 +259,10 @@ class PurgeCache
     private function enqueueProductIdsWithPriority($priority) {
         if (!empty($this->productIds)) {
             $this->cacheWarmer->sendEntitiesToQueue(
-                \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_ENQUEUE_ALL,
-                \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_PRODUCTS,
+                \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
+                \Bydn\ImprovedPageCache\Model\WarmItem\Types::PRODUCTS,
                 $this->productIds,
-                $priority);
+                $priority ? \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH : \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST);
         }
     }
 
@@ -264,10 +274,10 @@ class PurgeCache
     private function enqueueCategoryIdsWithPriority($priority) {
         if (!empty($this->categoryIds)) {
             $this->cacheWarmer->sendEntitiesToQueue(
-                \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_ENQUEUE_ALL,
-                \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_CATEGORIES,
+                \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
+                \Bydn\ImprovedPageCache\Model\WarmItem\Types::CATEGORIES,
                 $this->categoryIds,
-                $priority);
+                $priority ? \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH : \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST);
         }
     }
 
@@ -278,12 +288,12 @@ class PurgeCache
      */
     private function enqueueCommonPages($priority) {
         $this->cacheWarmer->sendEntitiesToQueue(
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_ENQUEUE_ALL,
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_DIRECT_URL,
+            \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
+            \Bydn\ImprovedPageCache\Model\WarmItem\Types::DIRECT_URL,
             [
                 '',
                 'promocion',
             ],
-            $priority);
+            $priority ? \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH : \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST);
     }
 }

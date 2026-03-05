@@ -1,4 +1,14 @@
 <?php
+/**
+ * @package     Bydn_ImprovedPageCache
+ * @author      Daniel Navarro <https://github.com/danidnm>
+ * @license     GPL-3.0-or-later
+ * @copyright   Copyright (c) 2025 Daniel Navarro
+ *
+ * This file is part of a free software package licensed under the
+ * GNU General Public License v3.0.
+ * You may redistribute and/or modify it under the same license.
+ */
 
 namespace Bydn\ImprovedPageCache\Model\Queue;
 
@@ -179,6 +189,7 @@ Class Publisher
             $pageSize = $this->helperConfig->getProductsPerPage($storeId);
             foreach ($categoryIds as $categoryId) {
                 try {
+                    /** @var \Magento\Catalog\Model\Category $category */
                     $category = $this->categoryRepository->get($categoryId, $storeId);
                     $productCount = $category->getProductCount();
                     $pages = ceil($productCount / $pageSize);
@@ -361,7 +372,7 @@ Class Publisher
     private function extractAllProductIds() {
         $collection = $this->productCollectionFactory->create();
         $collection->addAttributeToSelect('id');
-        $collection->addAttributeToFilter('status', ProductStatus::STATUS_ENABLED);
+        $collection->addAttributeToFilter('status', ['eq' => ProductStatus::STATUS_ENABLED]);
         return $collection->getAllIds();
     }
 

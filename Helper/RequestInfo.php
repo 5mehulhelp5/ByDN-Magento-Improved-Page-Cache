@@ -1,4 +1,14 @@
 <?php
+/**
+ * @package     Bydn_ImprovedPageCache
+ * @author      Daniel Navarro <https://github.com/danidnm>
+ * @license     GPL-3.0-or-later
+ * @copyright   Copyright (c) 2025 Daniel Navarro
+ *
+ * This file is part of a free software package licensed under the
+ * GNU General Public License v3.0.
+ * You may redistribute and/or modify it under the same license.
+ */
 
 namespace Bydn\ImprovedPageCache\Helper;
 
@@ -39,9 +49,9 @@ class RequestInfo extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Returns current cron job code
+     * Returns if cron is running
      *
-     * @return null
+     * @return bool
      */
     public function isCronRunning() {
         return ($this->currentCronCode !== null);
@@ -65,9 +75,9 @@ class RequestInfo extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Returns current command code
+     * Returns if command is running
      *
-     * @return null
+     * @return bool
      */
     public function isCommandRunning() {
         return ($this->currentCommandCode !== null);
@@ -91,9 +101,9 @@ class RequestInfo extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Returns current command code
+     * Returns if indexer is running
      *
-     * @return null
+     * @return bool
      */
     public function isIndexerRunning() {
         return ($this->currentIndexerCode !== null);
@@ -117,9 +127,9 @@ class RequestInfo extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Returns current command code
+     * Returns if webapi is running
      *
-     * @return null
+     * @return bool
      */
     public function isWebapiRunning() {
         return ($this->currentWebapiMethod !== null);
