@@ -6,6 +6,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
+use Bydn\ImprovedPageCache\Model\WarmItem\Priority as WarmPriority;
+
 /*
  * php bin/magento bydn:cache:warm --stores 1 --type home
  * php bin/magento bydn:cache:warm --stores 1 --type pages --ids all
@@ -42,7 +45,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
     public function __construct(
         \Bydn\ImprovedPageCache\Model\Queue\Warm\Publisher $warmer,
         \Psr\Log\LoggerInterface $logger,
-        string $name = null
+        ?string $name = null
     )
     {
         $this->warmer = $warmer;
@@ -55,8 +58,9 @@ class Warm extends \Symfony\Component\Console\Command\Command
      */
     protected function configure()
     {
+        $serializedTypes = implode(', ', WarmTypes::getAllTypes());
         $this->setName('bydn:cache:warm');
-        $this->setDescription('Warms Varnish cache for specific types (home, pages, categories, products, url)');
+        $this->setDescription('Warms Varnish cache for specific types (' . $serializedTypes . ')');
         $this->setDefinition([
             new InputOption(
                 self::PARAM_STORES,
@@ -68,7 +72,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
                 self::PARAM_TYPE,
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Type of operation. Allowed: home, pages, categories, products, url'
+                'Type of operation. Allowed: ' . $serializedTypes
             ),
             new InputOption(
                 self::PARAM_IDS,
@@ -87,7 +91,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'Priority level (1-5). Default: 1. Ex: --' . self::PARAM_PRIORITY . '=5',
-                \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST
+                WarmPriority::LOWEST
             )
         ]);
         parent::configure();
@@ -108,7 +112,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
         $priority = (int) $input->getOption(self::PARAM_PRIORITY);
 
         // Priority validation
-        if ($priority < \Bydn\ImprovedPageCache\Model\WarmItem\Priority::LOWEST || $priority > \Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGHEST) {
+        if ($priority < WarmPriority::LOWEST || $priority > WarmPriority::HIGHEST) {
             throw new \InvalidArgumentException('Priority must be a number between 1 and 5.');
         }
 
@@ -117,7 +121,7 @@ class Warm extends \Symfony\Component\Console\Command\Command
             throw new \InvalidArgumentException('The "--type" option is mandatory.');
         }
 
-        $allowedTypes = ['home', 'pages', 'categories', 'products', 'url'];
+        $allowedTypes = WarmTypes::getAllTypes();
         if (!in_array($type, $allowedTypes)) {
             throw new \InvalidArgumentException(
                 sprintf('Invalid type "%s". Allowed values: %s', $type, implode(', ', $allowedTypes))

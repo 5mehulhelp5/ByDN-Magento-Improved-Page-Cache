@@ -2,11 +2,24 @@
 
 namespace Bydn\ImprovedPageCache\Model\Queue\Warm;
 
-use Magento\MysqlMq\Model\ResourceModel\MessageCollection;
-use Magento\Setup\Exception;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
+use Magento\Cms\Model\ResourceModel\Page\CollectionFactory as PageCollectionFactory;
+use Magento\Framework\Exception\LocalizedException;
+
+use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
+use Bydn\ImprovedPageCache\Model\WarmItem\Priority as WarmPriority;
+use Bydn\ImprovedPageCache\Model\WarmItem\Status as WarmStatus;
 
 Class Publisher
 {
+    public const ALL = 'all';
+
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    private $storeManager;
+
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
      */
@@ -18,24 +31,19 @@ Class Publisher
     private $productCollectionFactory;
 
     /**
-     * @var \Magento\Framework\Serialize\Serializer\Json
+     * @var \Magento\Cms\Model\ResourceModel\Page\CollectionFactory
      */
-    private  $json;
+    private $pageCollectionFactory;
 
     /**
-     * @var \Magento\Framework\MessageQueue\PublisherInterface
+     * @var \Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem
      */
-    private $queuePublisher;
+    private $warmItemResource;
 
     /**
-     * @var \Magento\MysqlMq\Model\ResourceModel\MessageCollection
+     * @var \Bydn\ImprovedPageCache\Model\WarmItemFactory
      */
-    private  $messageCollection;
-
-    /**
-     * @var \Magento\Framework\App\ResourceConnection
-     */
-    private $resourceConnection;
+    private $warmItemFactory;
 
     /**
      * @var \Psr\Log\LoggerInterface
@@ -43,113 +51,182 @@ Class Publisher
     private $logger;
 
     /**
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory
+     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+     * @param \Magento\Cms\Model\ResourceModel\Page\CollectionFactory $pageCollectionFactory
+     * @param \Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem $warmItemResource
+     * @param \Bydn\ImprovedPageCache\Model\WarmItemFactory $warmItemFactory
      * @param \Psr\Log\LoggerInterface $logger
      */
     public function __construct(
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory,
         \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
-        \Magento\Framework\Serialize\Serializer\Json $json,
-        \Magento\Framework\MessageQueue\PublisherInterface $queuePublisher,
-        \Magento\MysqlMq\Model\ResourceModel\MessageCollection $messageCollection,
-        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\Cms\Model\ResourceModel\Page\CollectionFactory $pageCollectionFactory,
+        \Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem $warmItemResource,
+        \Bydn\ImprovedPageCache\Model\WarmItemFactory $warmItemFactory,
         \Psr\Log\LoggerInterface $logger
-    )
-    {
+    ) {
+        $this->storeManager = $storeManager;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->productCollectionFactory = $productCollectionFactory;
-        $this->json = $json;
-        $this->queuePublisher = $queuePublisher;
-        $this->messageCollection = $messageCollection;
-        $this->resourceConnection = $resourceConnection;
+        $this->pageCollectionFactory = $pageCollectionFactory;
+        $this->warmItemResource = $warmItemResource;
+        $this->warmItemFactory = $warmItemFactory;
         $this->logger = $logger;
     }
 
     /**
+     * @param $stores
      * @param $type
      * @param $data
+     * @param int $priority
      * @return void
-     * @throws Exception
+     * @throws LocalizedException
      */
-    public function sendEntitiesToQueue($stores, $type, $data, $highPriority = false) {
+    public function sendEntitiesToQueue($stores, $type, $data, $priority = WarmPriority::LOWEST) {
 
-        // Validate params
-        $this->validateParams($stores, $type, $data);
+        // Validate type
+        $type = $this->validateType($type);
 
-        // Extract stores if needed
-        $stores = $this->extractStores($stores);
-
-        // Extract IDs if needed
-        if (in_array($type, array(
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_CATEGORIES,
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_PRODUCTS,
-        ))) {
-            $data = $this->extractIds($type, $data);
+        // Follow depending on type, validate params
+        switch ($type) {
+            case WarmTypes::HOME:
+                $this->enqueueHome($stores, $priority);
+                break;
+            case WarmTypes::PAGES:
+                $this->enqueuePages($stores, $data, $priority);
+                break;
+            case WarmTypes::CATEGORIES:
+                $this->enqueueCategories($stores, $data, $priority);
+                break;
+            case WarmTypes::PRODUCTS:
+                $this->enqueueProducts($stores, $data, $priority);
+                break;
+            case WarmTypes::DIRECT_URL:
+                $this->enqueueUrl($stores, $data, $priority);
+                break;
         }
+    }
 
-        // Log and send to the queue
-        $topicName = ($highPriority) ?
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::PRIORITY_QUEUE_NAME :
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::TOPIC_NAME;
+    /**
+     * Enqueue home page for given stores
+     */
+    private function enqueueHome($stores, $priority)
+    {
+        $stores = $this->extractStores($stores);
+        foreach ($stores as $storeId) {
+            $this->enqueueEntity($storeId, WarmTypes::HOME, '', $priority);
+        }
+    }
 
-        // Ensure data is an array
-        $data = is_array($data) ? $data : explode(',', $data ?? '');
-
-        // Split for the queue
-        $chunks = $this->getChunks($data);
-
-        // Send to the queue
-        foreach ($stores as $store) {
-            foreach ($chunks as $chunk) {
-
-                // Prepare data
-                $rawData = [
-                    'store' => $store,
-                    'type' => $type,
-                    'data' => $chunk
-                ];
-
-                // Encode message body
-                $messageBody = $this->json->serialize($rawData);
-                $messageBodyForSelect = str_replace('\/', '\\\\\\\\\\\\/', $messageBody);
-                $messageBodyForSelect = str_replace('"', '\\\\"', $messageBodyForSelect);
-
-                // Check for duplicates
-                $sql = "SELECT main_table.*, status_table.status
-FROM queue_message AS main_table
-INNER JOIN queue_message_status AS status_table ON main_table.id = status_table.message_id
-WHERE (topic_name = '{$topicName}') AND (status = '2') AND (body = '\"{$messageBodyForSelect}\"')";
-                $rows = $this->resourceConnection->getConnection()->fetchAll($sql);
-                if (count($rows) > 0) {
-                    $this->logger->debug('Skip duplicated');
-                    continue;
-                }
-
-                $this->logger->debug('Queueing for warming');
-                $this->logger->debug($rawData);
-                $this->queuePublisher->publish($topicName, $messageBody);
+    /**
+     * Enqueue CMS pages
+     */
+    private function enqueuePages($stores, $data, $priority)
+    {
+        $stores = $this->extractStores($stores);
+        $pageIds = $this->extractPageIds($data);
+        foreach ($stores as $storeId) {
+            foreach ($pageIds as $pageId) {
+                $this->enqueueEntity($storeId, WarmTypes::PAGES, $pageId, $priority);
             }
         }
     }
 
     /**
-     * @param $type
-     * @param $ids
-     * @return void
-     * @throws Exception
+     * Enqueue Categories
      */
-    private function validateParams($stores, $type, $ids)
+    private function enqueueCategories($stores, $data, $priority)
     {
-        // Validate params
-        if (!in_array($type, array(
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_HOME,
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_CATEGORIES,
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_PRODUCTS,
-            \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_DIRECT_URL,
-        ))) {
-            $msg = "Unsupported operation type";
-            $this->logger->writeError(__METHOD__, __LINE__,  $msg);
-            throw new Exception($msg);
+        $stores = $this->extractStores($stores);
+        $categoryIds = $this->extractIds(WarmTypes::CATEGORIES, $data);
+        foreach ($stores as $storeId) {
+            foreach ($categoryIds as $categoryId) {
+                $this->enqueueEntity($storeId, WarmTypes::CATEGORIES, $categoryId, $priority);
+            }
         }
+    }
+
+    /**
+     * Enqueue Products
+     */
+    private function enqueueProducts($stores, $data, $priority)
+    {
+        $stores = $this->extractStores($stores);
+        $productIds = $this->extractIds(WarmTypes::PRODUCTS, $data);
+        foreach ($stores as $storeId) {
+            foreach ($productIds as $productId) {
+                $this->enqueueEntity($storeId, WarmTypes::PRODUCTS, $productId, $priority);
+            }
+        }
+    }
+
+    /**
+     * Enqueue specific URLs
+     */
+    private function enqueueUrl($stores, $data, $priority)
+    {
+        $stores = $this->extractStores($stores);
+        $urls = is_array($data) ? $data : explode(',', $data ?? '');
+        foreach ($stores as $storeId) {
+            foreach ($urls as $url) {
+                $this->enqueueEntity($storeId, WarmTypes::DIRECT_URL, trim($url), $priority);
+            }
+        }
+    }
+
+    /**
+     * Create and save a WarmItem if not duplicated
+     */
+    private function enqueueEntity($storeId, $type, $info, $priority)
+    {
+        if ($this->checkDuplicated($storeId, $type, $info)) {
+            return;
+        }
+
+        /** @var \Bydn\ImprovedPageCache\Model\WarmItem $warmItem */
+        $warmItem = $this->warmItemFactory->create();
+        $warmItem->setStoreId($storeId);
+        $warmItem->setType($type);
+        $warmItem->setInfo($info);
+        $warmItem->setPriority($priority);
+        $warmItem->setStatus(WarmStatus::NEW);
+
+        try {
+            $this->warmItemResource->save($warmItem);
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+        }
+    }
+
+    /**
+     * Check if a record with same parameters already exists
+     */
+    private function checkDuplicated($storeId, $type, $info)
+    {
+        $connection = $this->warmItemResource->getConnection();
+        $select = $connection->select()
+            ->from($this->warmItemResource->getMainTable())
+            ->where('store_id = ?', $storeId)
+            ->where('type = ?', $type)
+            ->where('info = ?', $info)
+            ->where('status = ?', WarmStatus::NEW);
+
+        return (bool)$connection->fetchOne($select);
+    }
+
+    /**
+     * @param $type
+     * @return int[]|mixed
+     */
+    private function validateType($type)
+    {
+        if (!in_array($type, WarmTypes::getAllTypes())) {
+            throw new LocalizedException(__("Unsupported operation type"));
+        }
+        return $type;
     }
 
     /**
@@ -158,9 +235,14 @@ WHERE (topic_name = '{$topicName}') AND (status = '2') AND (body = '\"{$messageB
      */
     private function extractStores($stores)
     {
-        // Check if all categories or all products
-        if ($stores == \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_ENQUEUE_ALL) {
-            $stores = [1];  // FIXME: Need to find store ids in database
+        if ($stores == self::ALL) {
+            $storeIds = [];
+            foreach ($this->storeManager->getStores() as $store) {
+                if ($store->getIsActive()) {
+                    $storeIds[] = $store->getId();
+                }
+            }
+            return $storeIds;
         }
 
         // Ensure ids is an array
@@ -177,11 +259,11 @@ WHERE (topic_name = '{$topicName}') AND (status = '2') AND (body = '\"{$messageB
     private function extractIds($type, $ids)
     {
         // Check if all categories or all products
-        if ($ids == \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_ENQUEUE_ALL) {
-            if ($type == \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_CATEGORIES) {
+        if ($ids == self::ALL) {
+            if ($type == WarmTypes::CATEGORIES) {
                 $ids = $this->extractAllCategoryIds();
             }
-            else if ($type == \Bydn\ImprovedPageCache\Model\Queue\Warm\Config::QUEUE_OP_TYPE_PRODUCTS) {
+            else if ($type == WarmTypes::PRODUCTS) {
                 $ids = $this->extractAllProductIds();
             }
         }
@@ -190,6 +272,17 @@ WHERE (topic_name = '{$topicName}') AND (status = '2') AND (body = '\"{$messageB
         $ids = is_array($ids) ? $ids : explode(',', $ids);
 
         return $ids;
+    }
+
+    /**
+     * Extract page IDs, handling 'all'
+     */
+    private function extractPageIds($ids)
+    {
+        if ($ids == self::ALL) {
+            return $this->extractAllPageIds();
+        }
+        return is_array($ids) ? $ids : explode(',', $ids);
     }
 
     /**
@@ -209,11 +302,17 @@ WHERE (topic_name = '{$topicName}') AND (status = '2') AND (body = '\"{$messageB
     private function extractAllProductIds() {
         $collection = $this->productCollectionFactory->create();
         $collection->addAttributeToSelect('id');
-        $collection->addAttributeToFilter('status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED);
+        $collection->addAttributeToFilter('status', ProductStatus::STATUS_ENABLED);
         return $collection->getAllIds();
     }
 
-    private function getChunks($ids) {
-        return array_chunk($ids, 1);
+    /**
+     * @return array
+     */
+    private function extractAllPageIds() {
+        $collection = $this->pageCollectionFactory->create();
+        $collection->addFieldToSelect('page_id');
+        $collection->addFieldToFilter('is_active', 1);
+        return $collection->getAllIds();
     }
 }
