@@ -106,12 +106,18 @@ class Consumer
     /**
      * Execute the processing logic
      *
+     * @param int|null $priority
      * @return void
      */
-    public function execute()
+    public function execute($priority = null)
     {
         $collection = $this->warmItemCollectionFactory->create();
         $collection->addFieldToFilter('status', WarmStatus::NEW);
+
+        if ($priority !== null) {
+            $collection->addFieldToFilter('priority', ['gteq' => $priority]);
+        }
+
         $collection->setOrder('priority', 'DESC');
         $collection->setOrder('created_at', 'ASC');
         $collection->setPageSize(500);
