@@ -2,12 +2,22 @@
 
 namespace Bydn\ImprovedPageCache\Model\Queue\Warm;
 
-use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Cms\Model\ResourceModel\Page\CollectionFactory as PageCollectionFactory;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
 
+use Bydn\ImprovedPageCache\Helper\Config as HelperConfig;
+use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
+use Bydn\ImprovedPageCache\Model\WarmItemFactory;
 use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
 use Bydn\ImprovedPageCache\Model\WarmItem\Priority as WarmPriority;
 use Bydn\ImprovedPageCache\Model\WarmItem\Status as WarmStatus;
+
+use Psr\Log\LoggerInterface;
 
 Class Publisher
 {
@@ -19,59 +29,75 @@ Class Publisher
     private $storeManager;
 
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
+     * @var CategoryCollectionFactory
      */
     private $categoryCollectionFactory;
 
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
+     * @var ProductCollectionFactory
      */
     private $productCollectionFactory;
 
     /**
-     * @var \Magento\Cms\Model\ResourceModel\Page\CollectionFactory
+     * @var PageCollectionFactory
      */
     private $pageCollectionFactory;
 
     /**
-     * @var \Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem
+     * @var CategoryRepositoryInterface
+     */
+    private $categoryRepository;
+
+    /**
+     * @var WarmItemResource
      */
     private $warmItemResource;
 
     /**
-     * @var \Bydn\ImprovedPageCache\Model\WarmItemFactory
+     * @var WarmItemFactory
      */
     private $warmItemFactory;
 
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var HelperConfig
+     */
+    private $helperConfig;
+
+    /**
+     * @var LoggerInterface
      */
     private $logger;
 
     /**
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory
-     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
-     * @param \Magento\Cms\Model\ResourceModel\Page\CollectionFactory $pageCollectionFactory
-     * @param \Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem $warmItemResource
-     * @param \Bydn\ImprovedPageCache\Model\WarmItemFactory $warmItemFactory
-     * @param \Psr\Log\LoggerInterface $logger
+     * @param StoreManagerInterface $storeManager
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param ProductCollectionFactory $productCollectionFactory
+     * @param PageCollectionFactory $pageCollectionFactory
+     * @param CategoryRepositoryInterface $categoryRepository
+     * @param WarmItemResource $warmItemResource
+     * @param WarmItemFactory $warmItemFactory
+     * @param HelperConfig $helperConfig
+     * @param LoggerInterface $logger
      */
     public function __construct(
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory,
-        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
-        \Magento\Cms\Model\ResourceModel\Page\CollectionFactory $pageCollectionFactory,
-        \Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem $warmItemResource,
-        \Bydn\ImprovedPageCache\Model\WarmItemFactory $warmItemFactory,
-        \Psr\Log\LoggerInterface $logger
+        StoreManagerInterface $storeManager,
+        CategoryCollectionFactory $categoryCollectionFactory,
+        ProductCollectionFactory $productCollectionFactory,
+        PageCollectionFactory $pageCollectionFactory,
+        CategoryRepositoryInterface $categoryRepository,
+        WarmItemResource $warmItemResource,
+        WarmItemFactory $warmItemFactory,
+        HelperConfig $helperConfig,
+        LoggerInterface $logger
     ) {
         $this->storeManager = $storeManager;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->pageCollectionFactory = $pageCollectionFactory;
+        $this->categoryRepository = $categoryRepository;
         $this->warmItemResource = $warmItemResource;
         $this->warmItemFactory = $warmItemFactory;
+        $this->helperConfig = $helperConfig;
         $this->logger = $logger;
     }
 
@@ -141,8 +167,22 @@ Class Publisher
         $stores = $this->extractStores($stores);
         $categoryIds = $this->extractIds(WarmTypes::CATEGORIES, $data);
         foreach ($stores as $storeId) {
+            $pageSize = $this->helperConfig->getProductsPerPage($storeId);
             foreach ($categoryIds as $categoryId) {
-                $this->enqueueEntity($storeId, WarmTypes::CATEGORIES, $categoryId, $priority);
+                try {
+                    $category = $this->categoryRepository->get($categoryId, $storeId);
+                    $productCount = $category->getProductCount();
+                    $pages = ceil($productCount / $pageSize);
+                    
+                    if ($pages == 0) $pages = 1;
+
+                    for ($i = 1; $i <= $pages; $i++) {
+                        $info = $categoryId . ',' . $i;
+                        $this->enqueueEntity($storeId, WarmTypes::CATEGORIES, $info, $priority);
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->error($e->getMessage());
+                }
             }
         }
     }
