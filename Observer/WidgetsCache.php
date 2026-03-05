@@ -50,49 +50,6 @@ class WidgetsCache implements \Magento\Framework\Event\ObserverInterface
         $this->logger = $logger;
     }
 
-//    /**
-//     * @param \Magento\Widget\Model\Widget\Instance $widget
-//     * @return bool
-//     */
-//    public function hasPages($widget)
-//    {
-//        // Check pages (old)
-//        $pageGroups = $widget->getOrigData('page_groups') ?? [];
-//        foreach ($pageGroups as $pageGroup) {
-//            if  (
-//                isset($pageGroup['page_group']) &&
-//                stripos($pageGroup['page_group'], 'page') !== false
-//            ) {
-//                return true;
-//            }
-//            if  (
-//                isset($pageGroup['group']) &&
-//                stripos($pageGroup['group'], 'page') !== false
-//            ) {
-//                return true;
-//            }
-//        }
-//
-//        // Check pages (new)
-//        $pageGroups = $widget->getPageGroups() ?? [];
-//        foreach ($pageGroups as $pageGroup) {
-//            if  (
-//                isset($pageGroup['page_group']) &&
-//                stripos($pageGroup['page_group'], 'page') !== false
-//            ) {
-//                return true;
-//            }
-//            if  (
-//                isset($pageGroup['group']) &&
-//                stripos($pageGroup['group'], 'page') !== false
-//            ) {
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
-
     /**
      * @param \Magento\Widget\Model\Widget\Instance $widget
      * @return array
