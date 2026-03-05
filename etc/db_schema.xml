@@ -3,7 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="bydn_warm_item">
         <column xsi:type="int" name="entity_id" nullable="false" identity="true" padding="10" unsigned="true" comment="Id"/>
-        <column xsi:type="int" name="type" nullable="false" unsigned="true" comment="Page type"/>
+        <column xsi:type="varchar" name="type" nullable="false" length="32" comment="Page type"/>
         <column xsi:type="text" name="info" nullable="false" comment="Warm extra info"/>
         <column xsi:type="int" name="store_id" nullable="false" unsigned="true" comment="Store ID"/>
         <column xsi:type="int" name="priority" nullable="false" unsigned="true" comment="Warm priority"/>
