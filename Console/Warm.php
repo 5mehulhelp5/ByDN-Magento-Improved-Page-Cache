@@ -27,14 +27,29 @@ class Warm extends \Symfony\Component\Console\Command\Command
     private $consumer;
 
     /**
+     * @var \Magento\Framework\App\State
+     */
+    private $appState;
+
+    /**
      * @param Consumer $consumer
+     * @param \Magento\Framework\App\State $appState
      * @param string|null $name
      */
     public function __construct(
         Consumer $consumer,
+        \Magento\Framework\App\State $appState,
         ?string $name = null
     ) {
         $this->consumer = $consumer;
+        $this->appState = $appState;
+        
+        try {
+            $this->appState->getAreaCode();
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
+            $this->appState->setAreaCode(\Magento\Framework\App\Area::AREA_CRONTAB);
+        }
+
         parent::__construct($name);
     }
 
