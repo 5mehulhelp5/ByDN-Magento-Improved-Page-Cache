@@ -17,4 +17,14 @@
             <column name="entity_id"/>
         </constraint>
     </table>
+    <table name="bydn_warm_stats">
+        <column xsi:type="bigint" name="id" nullable="false" identity="true" padding="10" unsigned="true" comment="Id"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Creation date"/>
+        <column xsi:type="int" name="pending_items" nullable="false" unsigned="true" comment="Pending items"/>
+        <column xsi:type="int" name="done_items" nullable="false" unsigned="true" comment="Done items"/>
+        <column xsi:type="int" name="error_items" nullable="false" unsigned="true" comment="Error items"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+    </table>
 </schema>
