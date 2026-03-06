@@ -93,12 +93,16 @@ class Summary extends Template
         $data = [];
         foreach ($rows as $row) {
             $createdAt = $this->timezone->date(new \DateTime($row['created_at']));
+            $pending = (int)$row['pending_items'];
+            $done = (int)$row['done_items'];
+            $error = (int)$row['error_items'];
+            
             $data[] = [
                 'date' => $createdAt->format('H:i'),
                 'full_date' => $createdAt->format('Y-m-d H:i:s'),
-                'pending' => (int)$row['pending_items'],
-                'done' => (int)$row['done_items'],
-                'error' => (int)$row['error_items']
+                'total' => $pending + $done + $error,
+                'done' => $done,
+                'error' => $error
             ];
         }
 

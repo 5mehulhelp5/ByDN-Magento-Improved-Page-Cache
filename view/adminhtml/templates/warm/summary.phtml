@@ -63,7 +63,7 @@
         };
 
         function drawChart(period) {
-            var dataArray = [['Time', 'Pending', 'Done', 'Error']];
+            var dataArray = [['Time', <?= json_encode(__('Total')) ?>, <?= json_encode(__('Done')) ?>, <?= json_encode(__('Error')) ?>]];
             var periodData = chartData[period];
             
             if (!periodData || periodData.length === 0) {
@@ -74,7 +74,7 @@
             periodData.forEach(function(row) {
                 dataArray.push([
                     row.date,
-                    row.pending,
+                    row.total,
                     row.done,
                     row.error
                 ]);
