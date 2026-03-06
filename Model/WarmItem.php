@@ -165,6 +165,69 @@ class WarmItem extends AbstractModel implements WarmItemInterface
     }
 
     /**
+     * Get URL
+     *
+     * @return string|null
+     */
+    public function getUrl()
+    {
+        return $this->getData(self::URL);
+    }
+
+    /**
+     * Set URL
+     *
+     * @param string $url
+     * @return $this
+     */
+    public function setUrl($url)
+    {
+        return $this->setData(self::URL, $url);
+    }
+
+    /**
+     * Get time
+     *
+     * @return float|null
+     */
+    public function getTime()
+    {
+        return $this->getData(self::TIME);
+    }
+
+    /**
+     * Set time
+     *
+     * @param float $time
+     * @return $this
+     */
+    public function setTime($time)
+    {
+        return $this->setData(self::TIME, $time);
+    }
+
+    /**
+     * Get result code
+     *
+     * @return int|null
+     */
+    public function getResultCode()
+    {
+        return $this->getData(self::RESULT_CODE);
+    }
+
+    /**
+     * Set result code
+     *
+     * @param int $resultCode
+     * @return $this
+     */
+    public function setResultCode($resultCode)
+    {
+        return $this->setData(self::RESULT_CODE, $resultCode);
+    }
+
+    /**
      * Get created at
      *
      * @return string|null

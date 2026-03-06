@@ -8,6 +8,9 @@
         <column xsi:type="int" name="store_id" nullable="false" unsigned="true" comment="Store ID"/>
         <column xsi:type="int" name="priority" nullable="false" unsigned="true" comment="Warm priority"/>
         <column xsi:type="int" name="status" nullable="false" unsigned="true" comment="Warm status"/>
+        <column xsi:type="text" name="url" nullable="true" comment="Generated URL"/>
+        <column xsi:type="decimal" name="time" scale="4" precision="12" nullable="true" comment="Curl execution time"/>
+        <column xsi:type="smallint" name="result_code" nullable="true" comment="HTTP result code"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Creation date"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Update date"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">

@@ -30,6 +30,9 @@ interface WarmItemInterface
     public const STORE_ID = 'store_id';
     public const PRIORITY = 'priority';
     public const STATUS = 'status';
+    public const URL = 'url';
+    public const TIME = 'time';
+    public const RESULT_CODE = 'result_code';
     public const CREATED_AT = 'created_at';
     public const UPDATED_AT = 'updated_at';
 
@@ -122,6 +125,51 @@ interface WarmItemInterface
      * @return $this
      */
     public function setStatus($status);
+
+    /**
+     * Get URL
+     *
+     * @return string|null
+     */
+    public function getUrl();
+
+    /**
+     * Set URL
+     *
+     * @param string $url
+     * @return $this
+     */
+    public function setUrl($url);
+
+    /**
+     * Get time
+     *
+     * @return float|null
+     */
+    public function getTime();
+
+    /**
+     * Set time
+     *
+     * @param float $time
+     * @return $this
+     */
+    public function setTime($time);
+
+    /**
+     * Get result code
+     *
+     * @return int|null
+     */
+    public function getResultCode();
+
+    /**
+     * Set result code
+     *
+     * @param int $resultCode
+     * @return $this
+     */
+    public function setResultCode($resultCode);
 
     /**
      * Get created at

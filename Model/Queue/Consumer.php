@@ -17,7 +17,6 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Cms\Api\PageRepositoryInterface;
-use Magento\Framework\UrlInterface;
 use Magento\Framework\HTTP\Client\Curl;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem\CollectionFactory as WarmItemCollectionFactory;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
@@ -52,11 +51,6 @@ class Consumer
      * @var PageRepositoryInterface
      */
     private $pageRepository;
-
-    /**
-     * @var UrlInterface
-     */
-    private $urlBuilder;
 
     /**
      * @var Curl
@@ -114,7 +108,6 @@ class Consumer
      * @param ProductRepositoryInterface $productRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param PageRepositoryInterface $pageRepository
-     * @param UrlInterface $urlBuilder
      * @param Curl $curl
      * @param WarmItemCollectionFactory $warmItemCollectionFactory
      * @param WarmItemResource $warmItemResource
@@ -127,7 +120,6 @@ class Consumer
         ProductRepositoryInterface $productRepository,
         CategoryRepositoryInterface $categoryRepository,
         PageRepositoryInterface $pageRepository,
-        UrlInterface $urlBuilder,
         Curl $curl,
         WarmItemCollectionFactory $warmItemCollectionFactory,
         WarmItemResource $warmItemResource,
@@ -139,7 +131,6 @@ class Consumer
         $this->productRepository = $productRepository;
         $this->categoryRepository = $categoryRepository;
         $this->pageRepository = $pageRepository;
-        $this->urlBuilder = $urlBuilder;
         $this->curl = $curl;
         $this->warmItemCollectionFactory = $warmItemCollectionFactory;
         $this->warmItemResource = $warmItemResource;
@@ -224,6 +215,11 @@ class Consumer
                 $this->warmItemResource->save($item);
                 continue;
             }
+
+            // Save URL and set status to PROCESSING
+            $item->setUrl($url);
+            $item->setStatus(WarmStatus::PROCESSING);
+            $this->warmItemResource->save($item);
 
             // Add to batch
             $this->batchItems[] = $item;
@@ -332,16 +328,20 @@ class Consumer
         if ($this->concurrency > 1) {
             $results = $this->warmUrlsParallel($this->batchUrls);
             foreach ($this->batchItems as $index => $item) {
-                $status = isset($results[$index]) ? $results[$index] : false;
-                $item->setStatus($status ? WarmStatus::DONE : WarmStatus::ERROR);
+                $result = isset($results[$index]) ? $results[$index] : ['status' => false, 'http_code' => 0, 'time' => 0];
+                $item->setStatus($result['status'] ? WarmStatus::DONE : WarmStatus::ERROR);
+                $item->setTime($result['time']);
+                $item->setResultCode($result['http_code']);
                 $this->warmItemResource->save($item);
             }
         }
         else {
             $item = array_shift($this->batchItems);
             $url = array_shift($this->batchUrls);
-            $status = $this->warmUrl($url);
-            $item->setStatus($status ? WarmStatus::DONE : WarmStatus::ERROR);
+            $result = $this->warmUrl($url);
+            $item->setStatus($result['status'] ? WarmStatus::DONE : WarmStatus::ERROR);
+            $item->setTime($result['time']);
+            $item->setResultCode($result['http_code']);
             $this->warmItemResource->save($item);
         }
     }
@@ -391,13 +391,19 @@ class Consumer
 
             // Extract result for handle
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $results[$index] = ($httpCode == 200);
+            $totalTime = curl_getinfo($ch, CURLINFO_TOTAL_TIME);
+            
+            $results[$index] = [
+                'status' => ($httpCode == 200),
+                'http_code' => $httpCode,
+                'time' => $totalTime
+            ];
             
             // Log result
             if ($httpCode != 200) {
                 $this->logger->error('Error warming ' . $urls[$index] . ' (Status: ' . $httpCode . ')');
             } else {
-                $this->logger->info('Done: ' . $urls[$index]);
+                $this->logger->info('Done: ' . $urls[$index] . ' in ' . $totalTime . 's');
             }
 
             // Remove the handle from the multi handle and close it
@@ -416,7 +422,7 @@ class Consumer
      * Warm the given URL
      *
      * @param string $url
-     * @return bool
+     * @return array
      */
     private function warmUrl($url)
     {
@@ -428,13 +434,22 @@ class Consumer
             $this->curl->get($url);
             $end_time = microtime(true);
             $execution_time = ($end_time - $start_time);
+            $httpCode = $this->curl->getStatus();
 
             $this->logger->info('Done in ' . $execution_time . ' seconds');
 
-            return $this->curl->getStatus() == 200;
+            return [
+                'status' => ($httpCode == 200),
+                'http_code' => $httpCode,
+                'time' => $execution_time
+            ];
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            return false;
+            return [
+                'status' => false,
+                'http_code' => 0,
+                'time' => 0
+            ];
         }
     }
 }
