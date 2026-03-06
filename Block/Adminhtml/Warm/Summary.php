@@ -159,4 +159,19 @@ class Summary extends Template
             \IntlDateFormatter::SHORT
         );
     }
+
+    /**
+     * Returns the average time among DONE items.
+     *
+     * @return float
+     */
+    public function getAverageTime(): float
+    {
+        $connection = $this->warmItemResource->getConnection();
+        $select = $connection->select()
+            ->from($this->warmItemResource->getMainTable(), ['avg_time' => new \Zend_Db_Expr('AVG(time)')])
+            ->where('status = ?', Status::DONE);
+
+        return (float)$connection->fetchOne($select);
+    }
 }

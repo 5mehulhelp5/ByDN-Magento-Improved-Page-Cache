@@ -18,6 +18,10 @@
         <span class="bydn-warm-summary__count"><?= (int)$block->getErrorCount() ?></span>
         <span class="bydn-warm-summary__label"><?= $block->escapeHtml(__('Error')) ?></span>
     </div>
+    <div class="bydn-warm-summary__card bydn-warm-summary__card--avgtime">
+        <span class="bydn-warm-summary__count"><?= number_format($block->getAverageTime(), 2) ?>s</span>
+        <span class="bydn-warm-summary__label"><?= $block->escapeHtml(__('Avg Time')) ?></span>
+    </div>
     <div class="bydn-warm-summary__card bydn-warm-summary__card--lastrun">
         <span class="bydn-warm-summary__date">
             <?= $block->escapeHtml($block->getLastRunDate() ?? __('—')) ?>
@@ -72,6 +76,8 @@
     .bydn-warm-summary__card--done      .bydn-warm-summary__count { color: #185a31; }
     .bydn-warm-summary__card--error     { border-top: 4px solid #b4002d; }
     .bydn-warm-summary__card--error     .bydn-warm-summary__count { color: #b4002d; }
+    .bydn-warm-summary__card--avgtime   { border-top: 4px solid #7d4ba1; }
+    .bydn-warm-summary__card--avgtime   .bydn-warm-summary__count { color: #7d4ba1; }
     .bydn-warm-summary__card--lastrun   { border-top: 4px solid #514e60; }
     .bydn-warm-summary__card--oldest    { border-top: 4px solid #514e60; }
     .bydn-warm-summary__date {
