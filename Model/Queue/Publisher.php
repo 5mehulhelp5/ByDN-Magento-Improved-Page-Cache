@@ -198,7 +198,19 @@ Class Publisher
                 try {
                     /** @var \Magento\Catalog\Model\Category $category */
                     $category = $this->categoryRepository->get($categoryId, $storeId);
-                    $productCount = $category->getProductCount();
+                    $collection = $this->productCollectionFactory->create();
+                    $collection->setStoreId($storeId);
+                    $collection->addCategoryFilter($category);
+                    $collection->addAttributeToFilter('status', ['eq' => ProductStatus::STATUS_ENABLED]);
+                    $collection->addAttributeToFilter('visibility', [
+                        'in' => [
+                            ProductVisibility::VISIBILITY_BOTH,
+                            ProductVisibility::VISIBILITY_IN_CATALOG,
+                            ProductVisibility::VISIBILITY_IN_SEARCH
+                        ]
+                    ]);
+
+                    $productCount = $collection->getSize();
                     $pages = ceil($productCount / $pageSize);
                     
                     if ($pages == 0) $pages = 1;
