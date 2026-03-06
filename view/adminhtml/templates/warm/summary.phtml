@@ -1,0 +1,63 @@
+<?php
+/** @var \Bydn\ImprovedPageCache\Block\Adminhtml\Warm\Summary $block */
+?>
+<div class="bydn-warm-summary">
+    <div class="bydn-warm-summary__card bydn-warm-summary__card--new">
+        <span class="bydn-warm-summary__count"><?= (int)$block->getNewCount() ?></span>
+        <span class="bydn-warm-summary__label"><?= $block->escapeHtml(__('New')) ?></span>
+    </div>
+    <div class="bydn-warm-summary__card bydn-warm-summary__card--processing">
+        <span class="bydn-warm-summary__count"><?= (int)$block->getProcessingCount() ?></span>
+        <span class="bydn-warm-summary__label"><?= $block->escapeHtml(__('Processing')) ?></span>
+    </div>
+    <div class="bydn-warm-summary__card bydn-warm-summary__card--done">
+        <span class="bydn-warm-summary__count"><?= (int)$block->getDoneCount() ?></span>
+        <span class="bydn-warm-summary__label"><?= $block->escapeHtml(__('Done')) ?></span>
+    </div>
+    <div class="bydn-warm-summary__card bydn-warm-summary__card--error">
+        <span class="bydn-warm-summary__count"><?= (int)$block->getErrorCount() ?></span>
+        <span class="bydn-warm-summary__label"><?= $block->escapeHtml(__('Error')) ?></span>
+    </div>
+</div>
+<style>
+    .bydn-warm-summary {
+        display: flex;
+        gap: 16px;
+        padding: 16px 0 8px;
+        margin-bottom: 50px;
+    }
+    .bydn-warm-summary__card {
+        display: flex;
+        flex-grow: 1
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+        padding: 16px 24px;
+        border-radius: 4px;
+        border: 1px solid #d6d6d6;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .bydn-warm-summary__count {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.1;
+        color: #333;
+    }
+    .bydn-warm-summary__label {
+        font-size: .85rem;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #666;
+    }
+    .bydn-warm-summary__card--new       { border-top: 4px solid #1979c3; }
+    .bydn-warm-summary__card--new       .bydn-warm-summary__count { color: #1979c3; }
+    .bydn-warm-summary__card--processing { border-top: 4px solid #e07c1a; }
+    .bydn-warm-summary__card--processing .bydn-warm-summary__count { color: #e07c1a; }
+    .bydn-warm-summary__card--done      { border-top: 4px solid #185a31; }
+    .bydn-warm-summary__card--done      .bydn-warm-summary__count { color: #185a31; }
+    .bydn-warm-summary__card--error     { border-top: 4px solid #b4002d; }
+    .bydn-warm-summary__card--error     .bydn-warm-summary__count { color: #b4002d; }
+</style>

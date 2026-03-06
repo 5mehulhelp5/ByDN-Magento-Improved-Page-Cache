@@ -2,6 +2,10 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="content">
+            <block class="Bydn\ImprovedPageCache\Block\Adminhtml\Warm\Summary"
+                   name="bydn.warm.summary"
+                   template="Bydn_ImprovedPageCache::warm/summary.phtml"
+                   before="cache_warm_item_grid"/>
             <uiComponent name="cache_warm_item_grid"/>
         </referenceContainer>
     </body>
