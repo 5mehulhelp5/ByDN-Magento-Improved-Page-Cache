@@ -50,7 +50,7 @@ class Config extends AbstractHelper
             self::XML_PATH_CONCURRENCY,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: 1;
     }
 
     /**
