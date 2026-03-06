@@ -25,9 +25,9 @@ use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
 use Bydn\ImprovedPageCache\Helper\Config as HelperConfig;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
 use Bydn\ImprovedPageCache\Model\WarmItemFactory;
-use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
-use Bydn\ImprovedPageCache\Model\WarmItem\Priority as WarmPriority;
-use Bydn\ImprovedPageCache\Model\WarmItem\Status as WarmStatus;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Type as WarmTypes;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority as WarmPriority;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Status as WarmStatus;
 
 use Psr\Log\LoggerInterface;
 

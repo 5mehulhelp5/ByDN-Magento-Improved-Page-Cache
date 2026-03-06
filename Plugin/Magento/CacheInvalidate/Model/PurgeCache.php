@@ -186,9 +186,9 @@ class PurgeCache
 
         // Enqueue all products and categories
         // Categories will be outdated longer but it is not a good idea to refresh all of the category pages because one product has changed
-        $this->enqueueProductIds(\Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH);
-        $this->enqueueCategoryIds(\Bydn\ImprovedPageCache\Model\WarmItem\Priority::MEDIUM);
-        $this->enqueuePageIds(\Bydn\ImprovedPageCache\Model\WarmItem\Priority::HIGH);
+        $this->enqueueProductIds(\Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority::HIGH);
+        $this->enqueueCategoryIds(\Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority::MEDIUM);
+        $this->enqueuePageIds(\Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority::HIGH);
 
         $this->logger->debug('Cache tags invalidating: ' . json_encode($newTags));
 
@@ -317,7 +317,7 @@ class PurgeCache
         if (!empty($this->productIds)) {
             $this->publisher->sendEntitiesToQueue(
                 \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
-                \Bydn\ImprovedPageCache\Model\WarmItem\Types::PRODUCTS,
+                \Bydn\ImprovedPageCache\Model\Source\WarmItem\Type::PRODUCTS,
                 $this->productIds,
                 $priority);
         }
@@ -332,7 +332,7 @@ class PurgeCache
         if (!empty($this->categoryIds)) {
             $this->publisher->sendEntitiesToQueue(
                 \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
-                \Bydn\ImprovedPageCache\Model\WarmItem\Types::CATEGORIES,
+                \Bydn\ImprovedPageCache\Model\Source\WarmItem\Type::CATEGORIES,
                 $this->categoryIds,
                 $priority);
         }
@@ -347,7 +347,7 @@ class PurgeCache
         if (!empty($this->pageIds)) {
             $this->publisher->sendEntitiesToQueue(
                 \Bydn\ImprovedPageCache\Model\Queue\Publisher::ALL,
-                \Bydn\ImprovedPageCache\Model\WarmItem\Types::PAGES,
+                \Bydn\ImprovedPageCache\Model\Source\WarmItem\Type::PAGES,
                 $this->pageIds,
                 $priority);
         }

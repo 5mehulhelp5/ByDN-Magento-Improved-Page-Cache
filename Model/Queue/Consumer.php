@@ -21,8 +21,8 @@ use Magento\Framework\UrlInterface;
 use Magento\Framework\HTTP\Client\Curl;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem\CollectionFactory as WarmItemCollectionFactory;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
-use Bydn\ImprovedPageCache\Model\WarmItem\Status as WarmStatus;
-use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Status as WarmStatus;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Type as WarmTypes;
 use Bydn\ImprovedPageCache\Helper\Config as HelperConfig;
 use Psr\Log\LoggerInterface;
 

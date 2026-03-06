@@ -12,22 +12,27 @@
 
 namespace Bydn\ImprovedPageCache\Model\Source\WarmItem;
 
-use Bydn\ImprovedPageCache\Model\WarmItem\Status as StatusConstants;
 use Magento\Framework\Data\OptionSourceInterface;
 
 class Status implements OptionSourceInterface
 {
+    public const NEW        = 1;
+    public const PROCESSING = 2;
+    public const DONE       = 3;
+    public const ERROR      = 4;
+    public const DISABLED   = 5;
+
     /**
      * @return array
      */
     public function toOptionArray(): array
     {
         return [
-            ['value' => StatusConstants::NEW,        'label' => __('New')],
-            ['value' => StatusConstants::PROCESSING,  'label' => __('Processing')],
-            ['value' => StatusConstants::DONE,        'label' => __('Done')],
-            ['value' => StatusConstants::ERROR,       'label' => __('Error')],
-            ['value' => StatusConstants::DISABLED,    'label' => __('Disabled')],
+            ['value' => self::NEW,        'label' => __('New')],
+            ['value' => self::PROCESSING, 'label' => __('Processing')],
+            ['value' => self::DONE,       'label' => __('Done')],
+            ['value' => self::ERROR,      'label' => __('Error')],
+            ['value' => self::DISABLED,   'label' => __('Disabled')],
         ];
     }
 }

@@ -16,8 +16,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
-use Bydn\ImprovedPageCache\Model\WarmItem\Priority as WarmPriority;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Type as WarmTypes;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority as WarmPriority;
 
 /*
  * php bin/magento bydn:cache:enqueue --stores 1 --type home

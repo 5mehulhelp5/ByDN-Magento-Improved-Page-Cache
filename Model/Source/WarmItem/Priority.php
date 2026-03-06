@@ -12,22 +12,27 @@
 
 namespace Bydn\ImprovedPageCache\Model\Source\WarmItem;
 
-use Bydn\ImprovedPageCache\Model\WarmItem\Priority as PriorityConstants;
 use Magento\Framework\Data\OptionSourceInterface;
 
 class Priority implements OptionSourceInterface
 {
+    public const LOWEST  = 1;
+    public const LOW     = 2;
+    public const MEDIUM  = 3;
+    public const HIGH    = 4;
+    public const HIGHEST = 5;
+
     /**
      * @return array
      */
     public function toOptionArray(): array
     {
         return [
-            ['value' => PriorityConstants::LOWEST,  'label' => __('Lowest')],
-            ['value' => PriorityConstants::LOW,      'label' => __('Low')],
-            ['value' => PriorityConstants::MEDIUM,   'label' => __('Medium')],
-            ['value' => PriorityConstants::HIGH,     'label' => __('High')],
-            ['value' => PriorityConstants::HIGHEST,  'label' => __('Highest')],
+            ['value' => self::LOWEST,  'label' => __('Lowest')],
+            ['value' => self::LOW,     'label' => __('Low')],
+            ['value' => self::MEDIUM,  'label' => __('Medium')],
+            ['value' => self::HIGH,    'label' => __('High')],
+            ['value' => self::HIGHEST, 'label' => __('Highest')],
         ];
     }
 }

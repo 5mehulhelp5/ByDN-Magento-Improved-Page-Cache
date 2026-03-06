@@ -14,7 +14,7 @@ namespace Bydn\ImprovedPageCache\Cron;
 
 use Bydn\ImprovedPageCache\Helper\Config;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem\CollectionFactory;
-use Bydn\ImprovedPageCache\Model\WarmItem\Status;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Status;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
 use Psr\Log\LoggerInterface;
 

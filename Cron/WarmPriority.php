@@ -13,7 +13,7 @@
 namespace Bydn\ImprovedPageCache\Cron;
 
 use Bydn\ImprovedPageCache\Model\Queue\Consumer;
-use Bydn\ImprovedPageCache\Model\WarmItem\Priority;
+use Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority;
 
 class WarmPriority
 {
