@@ -13,6 +13,7 @@
 namespace Bydn\ImprovedPageCache\Model\Queue;
 
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Model\App\Emulation;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Cms\Api\PageRepositoryInterface;
@@ -23,7 +24,6 @@ use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
 use Bydn\ImprovedPageCache\Model\WarmItem\Status as WarmStatus;
 use Bydn\ImprovedPageCache\Model\WarmItem\Types as WarmTypes;
 use Bydn\ImprovedPageCache\Helper\Config as HelperConfig;
-use Magento\Store\Model\App\Emulation;
 use Psr\Log\LoggerInterface;
 
 class Consumer
@@ -32,6 +32,11 @@ class Consumer
      * @var StoreManagerInterface
      */
     private $storeManager;
+    
+    /**
+     * @var Emulation
+     */
+    private $emulation;
 
     /**
      * @var ProductRepositoryInterface
@@ -74,17 +79,13 @@ class Consumer
     private $helperConfig;
 
     /**
-     * @var Emulation
-     */
-    private $emulation;
-
-    /**
      * @var LoggerInterface
      */
     private $logger;
 
     /**
      * @param StoreManagerInterface $storeManager
+     * @param Emulation $emulation
      * @param ProductRepositoryInterface $productRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param PageRepositoryInterface $pageRepository
@@ -97,6 +98,7 @@ class Consumer
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        Emulation $emulation,
         ProductRepositoryInterface $productRepository,
         CategoryRepositoryInterface $categoryRepository,
         PageRepositoryInterface $pageRepository,
@@ -105,10 +107,10 @@ class Consumer
         WarmItemCollectionFactory $warmItemCollectionFactory,
         WarmItemResource $warmItemResource,
         HelperConfig $helperConfig,
-        Emulation $emulation,
         LoggerInterface $logger
     ) {
         $this->storeManager = $storeManager;
+        $this->emulation = $emulation;
         $this->productRepository = $productRepository;
         $this->categoryRepository = $categoryRepository;
         $this->pageRepository = $pageRepository;
@@ -117,7 +119,6 @@ class Consumer
         $this->warmItemCollectionFactory = $warmItemCollectionFactory;
         $this->warmItemResource = $warmItemResource;
         $this->helperConfig = $helperConfig;
-        $this->emulation = $emulation;
         $this->logger = $logger;
     }
 
