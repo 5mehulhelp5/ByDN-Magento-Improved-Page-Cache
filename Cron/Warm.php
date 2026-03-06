@@ -13,6 +13,7 @@
 namespace Bydn\ImprovedPageCache\Cron;
 
 use Bydn\ImprovedPageCache\Model\Queue\Consumer;
+use Bydn\ImprovedPageCache\Model\WarmItem\Priority;
 
 class Warm
 {
@@ -37,6 +38,6 @@ class Warm
      */
     public function execute()
     {
-        $this->consumer->execute();
+        $this->consumer->execute(null, Priority::MEDIUM);
     }
 }

@@ -124,10 +124,11 @@ class Consumer
     /**
      * Execute the processing logic
      *
-     * @param int|null $priority
+     * @param int|null $minPriority
+     * @param int|null $maxPriority
      * @return void
      */
-    public function execute($priority = null)
+    public function execute($minPriority = null, $maxPriority = null)
     {
         if (!$this->helperConfig->isEnabled()) {
             return;
@@ -136,8 +137,12 @@ class Consumer
         $collection = $this->warmItemCollectionFactory->create();
         $collection->addFieldToFilter('status', WarmStatus::NEW);
 
-        if ($priority !== null) {
-            $collection->addFieldToFilter('priority', ['gteq' => $priority]);
+        if ($minPriority !== null) {
+            $collection->addFieldToFilter('priority', ['gteq' => $minPriority]);
+        }
+
+        if ($maxPriority !== null) {
+            $collection->addFieldToFilter('priority', ['lteq' => $maxPriority]);
         }
 
         $collection->setOrder('priority', 'DESC');
