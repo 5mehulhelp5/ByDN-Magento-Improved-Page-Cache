@@ -152,6 +152,12 @@ class Consumer
         foreach ($collection as $item) {
             $storeId = $item->getStoreId();
 
+            if (!$this->helperConfig->isEnabled($storeId)) {
+                $item->setStatus(WarmStatus::DISABLED);
+                $this->warmItemResource->save($item);
+                continue;
+            }
+
             if ($currentEmulatedStoreId === null) {
                 // First item, start emulation
                 $this->emulation->startEnvironmentEmulation($storeId);

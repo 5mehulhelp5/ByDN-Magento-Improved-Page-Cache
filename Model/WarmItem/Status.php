@@ -18,4 +18,5 @@ class Status
     public const PROCESSING = 2;
     public const DONE = 3;
     public const ERROR = 4;
+    public const DISABLED = 5;
 }

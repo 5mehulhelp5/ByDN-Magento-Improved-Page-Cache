@@ -317,7 +317,7 @@ Class Publisher
         if ($stores == self::ALL) {
             $storeIds = [];
             foreach ($this->storeManager->getStores() as $store) {
-                if ($store->getIsActive()) {
+                if ($store->getIsActive() && $this->helperConfig->isEnabled($store->getId())) {
                     $storeIds[] = $store->getId();
                 }
             }
