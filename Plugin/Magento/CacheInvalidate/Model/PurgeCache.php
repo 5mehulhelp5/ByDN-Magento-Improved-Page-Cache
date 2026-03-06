@@ -96,7 +96,7 @@ class PurgeCache
      */
     public function beforeSendPurgeRequest(\Magento\CacheInvalidate\Model\PurgeCache $subject, $tags)
     {
-        if (!$this->helperConfig->isEnabled()) {
+        if (!$this->helperConfig->isEnabled() || !$this->helperConfig->isSmartRefreshEnabled()) {
             return [$tags];
         }
 

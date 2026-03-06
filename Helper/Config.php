@@ -18,6 +18,7 @@ use Magento\Store\Model\ScopeInterface;
 class Config extends AbstractHelper
 {
     public const XML_PATH_ENABLED = 'bydn_improved_page_cache/general/enabled';
+    public const XML_PATH_SMART_REFRESH = 'bydn_improved_page_cache/general/enable_smart_refresh';
     public const XML_PATH_CONCURRENCY = 'bydn_improved_page_cache/general/concurrency';
     public const XML_PATH_CLEANUP_DAYS = 'bydn_improved_page_cache/general/cleanup_days';
     public const XML_PATH_GRID_PER_PAGE = 'catalog/frontend/grid_per_page';
@@ -33,6 +34,21 @@ class Config extends AbstractHelper
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_ENABLED,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Check if smart cache refresh is enabled
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isSmartRefreshEnabled($storeId = null)
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_SMART_REFRESH,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );

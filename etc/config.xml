@@ -12,6 +12,7 @@
         <bydn_improved_page_cache>
             <general>
                 <enabled>1</enabled>
+                <enable_smart_refresh>0</enable_smart_refresh>
                 <concurrency>5</concurrency>
                 <cleanup_days>7</cleanup_days>
             </general>
