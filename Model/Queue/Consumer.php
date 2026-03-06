@@ -354,50 +354,52 @@ class Consumer
      */
     private function warmUrlsParallel($urls)
     {
+        // Initialize a cURL multi handle to manage multiple requests simultaneously
         $multiHandle = curl_multi_init();
         $curlHandles = [];
         $results = [];
 
+        // Setup individual cURL handles for each URL and add them to the multi handle
         foreach ($urls as $index => $url) {
+
             $this->logger->info('Warming Parallel: ' . $url);
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HEADER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Magento-Cache-Refresh: 1']);
-            
-            curl_multi_add_handle($multiHandle, $ch);
-            $curlHandles[$index] = $ch;
+
+            // Create handle and add to multiple
+            $curlHandles[$index] = curl_init();
+            curl_setopt($curlHandles[$index], CURLOPT_URL, $url);
+            curl_setopt($curlHandles[$index], CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($curlHandles[$index], CURLOPT_HEADER, false);
+            curl_setopt($curlHandles[$index], CURLOPT_TIMEOUT, 30);
+            curl_setopt($curlHandles[$index], CURLOPT_HTTPHEADER, ['X-Magento-Cache-Refresh: 1']);
+            curl_multi_add_handle($multiHandle, $curlHandles[$index]);
         }
 
+        // Start executing the requests. curl_multi_exec is non-blocking. It starts the requests and returns immediately.
         $active = null;
         do {
-            $mrc = curl_multi_exec($multiHandle, $active);
-        } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+            curl_multi_exec($multiHandle, $active);
+            curl_multi_select($multiHandle);
+        } while ($active > 0);
 
-        while ($active && $mrc == CURLM_OK) {
-            if (curl_multi_select($multiHandle) != -1) {
-                do {
-                    $mrc = curl_multi_exec($multiHandle, $active);
-                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
-            }
-        }
-
+        // All requests are done. Now extract results and clean up.
         foreach ($curlHandles as $index => $ch) {
+
+            // Extract result for handle
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $results[$index] = ($httpCode == 200);
             
+            // Log result
             if ($httpCode != 200) {
-                $this->logger->error(sprintf('Error warming %s (Status: %s)', $urls[$index], $httpCode));
+                $this->logger->error('Error warming ' . $urls[$index] . ' (Status: ' . $httpCode . ')');
             } else {
-                $this->logger->info(sprintf('Done: %s', $urls[$index]));
+                $this->logger->info('Done: ' . $urls[$index]);
             }
 
+            // Remove the handle from the multi handle and close it
             curl_multi_remove_handle($multiHandle, $ch);
-            curl_close($ch);
         }
 
+        // Close the multi handle itself
         curl_multi_close($multiHandle);
 
         return $results;
