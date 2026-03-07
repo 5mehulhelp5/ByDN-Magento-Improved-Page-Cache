@@ -9,12 +9,12 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <tab id="bydn_ai" translate="label" sortOrder="2500">
-            <label>AI Extensions (by DN)</label>
+        <tab id="bydn_utils" translate="label" sortOrder="2600">
+            <label>Utilities (by DN)</label>
         </tab>
         <section id="bydn_improved_page_cache" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Improved Page Cache</label>
-            <tab>bydn_ai</tab>
+            <tab>bydn_utils</tab>
             <resource>Bydn_ImprovedPageCache::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General Configuration</label>
@@ -36,6 +36,29 @@
                     <label>Cleanup Old Records (Days)</label>
                     <comment>Automatically delete completed or error records older than X days. (default: 7)</comment>
                     <validate>validate-number validate-greater-than-zero</validate>
+                </field>
+            </group>
+            <group id="cron" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Cron Schedules</label>
+                <field id="warm_schedule" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Warm Cache Schedule</label>
+                    <comment>Cron expression for standard warm cache (default: * * * * *)</comment>
+                    <backend_model>Bydn\ImprovedPageCache\Model\Config\Backend\Cron</backend_model>
+                </field>
+                <field id="warm_priority_schedule" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Warm Cache Priority Schedule</label>
+                    <comment>Cron expression for priority warm cache (default: * * * * *)</comment>
+                    <backend_model>Bydn\ImprovedPageCache\Model\Config\Backend\Cron</backend_model>
+                </field>
+                <field id="cleanup_schedule" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Cleanup Schedule</label>
+                    <comment>Cron expression for cleaning up old records (default: 15 3 * * *)</comment>
+                    <backend_model>Bydn\ImprovedPageCache\Model\Config\Backend\Cron</backend_model>
+                </field>
+                <field id="stats_schedule" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stats Schedule</label>
+                    <comment>Cron expression for gathering statistics (default: */15 * * * *)</comment>
+                    <backend_model>Bydn\ImprovedPageCache\Model\Config\Backend\Cron</backend_model>
                 </field>
             </group>
         </section>
