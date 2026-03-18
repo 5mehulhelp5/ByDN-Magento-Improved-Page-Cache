@@ -102,7 +102,7 @@ Go to:
 
     System => Tools => Cache Warming.
 
-[PLACEHOLDER: Admin Grid Screenshot]
+<img alt="Cache Warm Stats" width="100%" src="https://github.com/danidnm/ByDN-Magento-Improved-Page-Cache/blob/master/docs/stats.jpg"/>
 
 On this screen, you can see:
 - **URL**: The specific URL being warmed.
