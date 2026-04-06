@@ -24,6 +24,7 @@ use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
 
 use Bydn\ImprovedPageCache\Helper\Config as HelperConfig;
 use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem as WarmItemResource;
+use Bydn\ImprovedPageCache\Model\ResourceModel\WarmItem\CollectionFactory as WarmItemCollectionFactory;
 use Bydn\ImprovedPageCache\Model\WarmItemFactory;
 use Bydn\ImprovedPageCache\Model\Source\WarmItem\Type as WarmTypes;
 use Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority as WarmPriority;
@@ -71,6 +72,11 @@ Class Publisher
     private $warmItemResource;
 
     /**
+     * @var WarmItemCollectionFactory
+     */
+    private $warmItemCollectionFactory;
+
+    /**
      * @var WarmItemFactory
      */
     private $warmItemFactory;
@@ -93,6 +99,7 @@ Class Publisher
      * @param CategoryRepositoryInterface $categoryRepository
      * @param ProductResource $productResource
      * @param WarmItemResource $warmItemResource
+     * @param WarmItemCollectionFactory $warmItemCollectionFactory
      * @param WarmItemFactory $warmItemFactory
      * @param HelperConfig $helperConfig
      * @param LoggerInterface $logger
@@ -105,6 +112,7 @@ Class Publisher
         CategoryRepositoryInterface $categoryRepository,
         ProductResource $productResource,
         WarmItemResource $warmItemResource,
+        WarmItemCollectionFactory $warmItemCollectionFactory,
         WarmItemFactory $warmItemFactory,
         HelperConfig $helperConfig,
         LoggerInterface $logger
@@ -116,6 +124,7 @@ Class Publisher
         $this->categoryRepository = $categoryRepository;
         $this->productResource = $productResource;
         $this->warmItemResource = $warmItemResource;
+        $this->warmItemCollectionFactory = $warmItemCollectionFactory;
         $this->warmItemFactory = $warmItemFactory;
         $this->helperConfig = $helperConfig;
         $this->logger = $logger;
@@ -270,7 +279,13 @@ Class Publisher
      */
     private function enqueueEntity($storeId, $type, $info, $priority)
     {
-        if ($this->checkDuplicated($storeId, $type, $info, $priority)) {
+        /** @var \Bydn\ImprovedPageCache\Model\WarmItem|null $item */
+        $item = $this->checkDuplicated($storeId, $type, $info);
+        if ($item != null) {
+            if ($item->getPriority() < $priority) {
+                $item->setPriority($priority);
+                $this->warmItemResource->save($item);
+            }
             return;
         }
 
@@ -294,18 +309,16 @@ Class Publisher
     /**
      * Check if a record with same parameters already exists
      */
-    private function checkDuplicated($storeId, $type, $info, $priority)
+    private function checkDuplicated($storeId, $type, $info)
     {
-        $connection = $this->warmItemResource->getConnection();
-        $select = $connection->select()
-            ->from($this->warmItemResource->getMainTable())
-            ->where('store_id = ?', $storeId)
-            ->where('type = ?', $type)
-            ->where('info = ?', $info)
-            ->where('status = ?', WarmStatus::NEW)
-            ->where('priority >= ?', $priority);
+        $collection = $this->warmItemCollectionFactory->create();
+        $collection->addFieldToFilter('store_id', $storeId)
+            ->addFieldToFilter('type', $type)
+            ->addFieldToFilter('info', $info)
+            ->addFieldToFilter('status', WarmStatus::NEW);
 
-        return (bool)$connection->fetchOne($select);
+        $item = $collection->getFirstItem();
+        return $item->getId() ? $item : null;
     }
 
     /**
