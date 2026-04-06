@@ -18,6 +18,7 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductColl
 use Magento\Cms\Model\ResourceModel\Page\CollectionFactory as PageCollectionFactory;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\ResourceModel\Product as ProductResource;
+use Magento\Catalog\Model\ResourceModel\Category as CategoryResource;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
 use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
@@ -67,6 +68,11 @@ Class Publisher
     private $productResource;
 
     /**
+     * @var CategoryResource
+     */
+    private $categoryResource;
+
+    /**
      * @var WarmItemResource
      */
     private $warmItemResource;
@@ -98,6 +104,7 @@ Class Publisher
      * @param PageCollectionFactory $pageCollectionFactory
      * @param CategoryRepositoryInterface $categoryRepository
      * @param ProductResource $productResource
+     * @param CategoryResource $categoryResource
      * @param WarmItemResource $warmItemResource
      * @param WarmItemCollectionFactory $warmItemCollectionFactory
      * @param WarmItemFactory $warmItemFactory
@@ -111,11 +118,13 @@ Class Publisher
         PageCollectionFactory $pageCollectionFactory,
         CategoryRepositoryInterface $categoryRepository,
         ProductResource $productResource,
+        CategoryResource $categoryResource,
         WarmItemResource $warmItemResource,
         WarmItemCollectionFactory $warmItemCollectionFactory,
         WarmItemFactory $warmItemFactory,
         HelperConfig $helperConfig,
         LoggerInterface $logger
+         
     ) {
         $this->storeManager = $storeManager;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
@@ -123,6 +132,7 @@ Class Publisher
         $this->pageCollectionFactory = $pageCollectionFactory;
         $this->categoryRepository = $categoryRepository;
         $this->productResource = $productResource;
+        $this->categoryResource = $categoryResource;
         $this->warmItemResource = $warmItemResource;
         $this->warmItemCollectionFactory = $warmItemCollectionFactory;
         $this->warmItemFactory = $warmItemFactory;
@@ -205,10 +215,10 @@ Class Publisher
             $pageSize = $this->helperConfig->getProductsPerPage($storeId);
             foreach ($categoryIds as $categoryId) {
                 try {
-                    /** @var \Magento\Catalog\Model\Category $category */
-                    $category = $this->categoryRepository->get($categoryId, $storeId);
 
                     // Full count with category
+                    // /** @var \Magento\Catalog\Model\Category $category */
+                    // $category = $this->categoryRepository->get($categoryId, $storeId);
                     // $collection = $this->productCollectionFactory->create();
                     // $collection->setStoreId($storeId);
                     // $collection->addCategoryFilter($category);
@@ -223,7 +233,7 @@ Class Publisher
                     // $productCount = $collection->getSize();
 
                     // Number of product by index status
-                    $productCount = $category->getProductCount();
+                    $productCount = $this->getCategoryProductCount($categoryId);
                     $pages = ceil($productCount / $pageSize);
                     
                     if ($pages == 0) $pages = 1;
@@ -431,4 +441,27 @@ Class Publisher
         $collection->addFieldToFilter('is_active', 1);
         return $collection->getAllIds();
     }
+    
+    /**
+     * Retrieve count products of category
+     *
+     * @return int
+     */
+    public function getCategoryProductCount($categoryId)
+    {
+        $productTable = $this->categoryResource->getTable('catalog_category_product');
+
+        $select = $this->categoryResource->getConnection()->select()->from(
+            ['main_table' => $productTable],
+            [new \Zend_Db_Expr('COUNT(main_table.product_id)')]
+        )->where(
+            'main_table.category_id = :category_id'
+        );
+
+        $bind = ['category_id' => (int)$categoryId];
+        $counts = $this->categoryResource->getConnection()->fetchOne($select, $bind);
+
+        return (int) $counts;
+    }
+
 }
