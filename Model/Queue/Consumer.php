@@ -183,6 +183,14 @@ class Consumer
 
         // Stop emulation
         $this->manageEmulation(null);
+
+        $waitTime = $this->helperConfig->getWaitTime();
+        if ($waitTime > 0) {
+            $this->logger->info(sprintf('Waiting %d milliseconds before next consumer run', $waitTime));
+            usleep($waitTime * 1000);
+        }
+        
+        $this->logger->info('Consumer execution finished');
     }
 
     /**

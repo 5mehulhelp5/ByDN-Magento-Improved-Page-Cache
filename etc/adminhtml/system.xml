@@ -37,6 +37,11 @@
                     <comment>Number of items to process per batch (default: 50)</comment>
                     <validate>validate-number validate-greater-than-zero</validate>
                 </field>
+                <field id="wait_time" translate="label" type="text" sortOrder="26" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Wait Time between runs (ms)</label>
+                    <comment>Wait time in milliseconds at the end of each consumer batch execution to reduce server load (default: 0)</comment>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                </field>
                 <field id="cleanup_days" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Cleanup Old Records (Days)</label>
                     <comment>Automatically delete completed or error records older than X days. (default: 7)</comment>

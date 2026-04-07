@@ -21,6 +21,7 @@ class Config extends AbstractHelper
     public const XML_PATH_SMART_REFRESH = 'bydn_improved_page_cache/general/enable_smart_refresh';
     public const XML_PATH_CONCURRENCY = 'bydn_improved_page_cache/general/concurrency';
     public const XML_PATH_BATCH_SIZE = 'bydn_improved_page_cache/general/batch_size';
+    public const XML_PATH_WAIT_TIME = 'bydn_improved_page_cache/general/wait_time';
     public const XML_PATH_CLEANUP_DAYS = 'bydn_improved_page_cache/general/cleanup_days';
     public const XML_PATH_GRID_PER_PAGE = 'catalog/frontend/grid_per_page';
     public const XML_PATH_PRODUCT_USE_CATEGORIES = 'catalog/seo/product_use_categories';
@@ -83,6 +84,21 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         ) ?: 50;
+    }
+
+    /**
+     * Get wait time in milliseconds
+     *
+     * @param int|null $storeId
+     * @return int
+     */
+    public function getWaitTime($storeId = null)
+    {
+        return (int)$this->scopeConfig->getValue(
+            self::XML_PATH_WAIT_TIME,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
     /**
