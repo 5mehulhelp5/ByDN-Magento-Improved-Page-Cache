@@ -129,15 +129,15 @@ class PurgeCache
         $actionName = $this->request->getActionName();
 
         // // Log request informacion for debug purposes
-        if (!empty($areaCode))            { $this->logger->debug('Area: ' . $areaCode);                      }
-        if (!empty($cronRunning))         { $this->logger->debug('Cron running: ' . $cronRunning);           }
-        if (!empty($commandRunning))      { $this->logger->debug('Command running: ' . $commandRunning);     }
-        if (!empty($indexerRunning))      { $this->logger->debug('Indexer running: ' . $indexerRunning);     }
-        if (!empty($webapiMethodRunning)) { $this->logger->debug('WebApi method: ' . $webapiMethodRunning);  }
-        if (!empty($controllerModule))    { $this->logger->debug('Controller module: ' . $controllerModule); }
-        if (!empty($moduleName))          { $this->logger->debug('Module: ' . $moduleName);                  }
-        if (!empty($controllerName))      { $this->logger->debug('Controller: ' . $controllerName);          }
-        if (!empty($actionName))          { $this->logger->debug('Action: ' . $actionName);                  }
+        // if (!empty($areaCode))            { $this->logger->debug('Area: ' . $areaCode);                      }
+        // if (!empty($cronRunning))         { $this->logger->debug('Cron running: ' . $cronRunning);           }
+        // if (!empty($commandRunning))      { $this->logger->debug('Command running: ' . $commandRunning);     }
+        // if (!empty($indexerRunning))      { $this->logger->debug('Indexer running: ' . $indexerRunning);     }
+        // if (!empty($webapiMethodRunning)) { $this->logger->debug('WebApi method: ' . $webapiMethodRunning);  }
+        // if (!empty($controllerModule))    { $this->logger->debug('Controller module: ' . $controllerModule); }
+        // if (!empty($moduleName))          { $this->logger->debug('Module: ' . $moduleName);                  }
+        // if (!empty($controllerName))      { $this->logger->debug('Controller: ' . $controllerName);          }
+        // if (!empty($actionName))          { $this->logger->debug('Action: ' . $actionName);                  }
 
         // Extract product and category tags
         $this->extractProductIds($tags);
@@ -176,7 +176,7 @@ class PurgeCache
 
             // Add to tags if not skipped
             if ($skipTag) {
-                $this->logger->debug('Avoid cleaning: ' . $currentTag);
+                //$this->logger->debug('Avoid cleaning: ' . $currentTag);
                 continue;
             }
 
@@ -190,7 +190,7 @@ class PurgeCache
         $this->enqueueCategoryIds(\Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority::MEDIUM);
         $this->enqueuePageIds(\Bydn\ImprovedPageCache\Model\Source\WarmItem\Priority::HIGH);
 
-        $this->logger->debug('Cache tags invalidating: ' . json_encode($newTags));
+        //$this->logger->debug('Cache tags invalidating: ' . json_encode($newTags));
 
         return [$newTags];
     }
@@ -236,8 +236,8 @@ class PurgeCache
             }
         }
 
-        $this->logger->debug('Product matches:');
-        $this->logger->debug(json_encode($this->productIds));
+        //$this->logger->debug('Product matches:');
+        //$this->logger->debug(json_encode($this->productIds));
 
         return $this->productIds;
     }
@@ -269,8 +269,8 @@ class PurgeCache
             }
         }
 
-        $this->logger->debug('Category matches:');
-        $this->logger->debug(json_encode($this->categoryIds));
+        //$this->logger->debug('Category matches:');
+        //$this->logger->debug(json_encode($this->categoryIds));
 
         return $this->categoryIds;
     }
@@ -302,8 +302,8 @@ class PurgeCache
             }
         }
 
-        $this->logger->debug('CMS Page matches:');
-        $this->logger->debug(json_encode($this->pageIds));
+        //$this->logger->debug('CMS Page matches:');
+        //$this->logger->debug(json_encode($this->pageIds));
 
         return $this->pageIds;
     }

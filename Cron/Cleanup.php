@@ -84,12 +84,12 @@ class Cleanup
                 $this->warmItemResource->delete($item);
                 $count++;
             } catch (\Exception $e) {
-                $this->logger->error('Error deleting warm item ID ' . $item->getId() . ': ' . $e->getMessage());
+                $this->logger->error('[Bydn_ImprovedPageCache] - Error deleting warm item ID ' . $item->getId() . ': ' . $e->getMessage());
             }
         }
 
         if ($count > 0) {
-            $this->logger->info(sprintf('Bydn_ImprovedPageCache: Cleaned up %d old records.', $count));
+            $this->logger->info(sprintf('[Bydn_ImprovedPageCache] - Cleaned up %d old records.', $count));
         }
     }
 }

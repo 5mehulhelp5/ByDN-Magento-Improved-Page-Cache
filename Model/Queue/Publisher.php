@@ -164,7 +164,7 @@ Class Publisher
             return;
         }
 
-        $this->logger->info(sprintf('Adding entities to queue: Type=%s, Stores=%s, Priority=%s', $type, $stores, $priority));
+        //$this->logger->info(sprintf('Adding entities to queue: Type=%s, Stores=%s, Priority=%s', $type, $stores, $priority));
 
         // Validate type
         $type = $this->validateType($type);
@@ -257,8 +257,9 @@ Class Publisher
                         $info = $categoryId . ',' . $i;
                         $this->enqueueEntity($storeId, WarmTypes::CATEGORIES, $info, $priority);
                     }
-                } catch (\Exception $e) {
-                    $this->logger->error($e->getMessage());
+                }
+                catch (\Exception $e) {
+                    $this->logger->error('[Bydn_ImprovedPageCache] - Error enqueuing categories: ' . $e->getMessage());
                 }
             }
         }
@@ -391,8 +392,9 @@ Class Publisher
                             ['entity_id = ?' => $updateData['entity_id']]
                         );
                     }
-                } catch (\Exception $e) {
-                    $this->logger->error($e->getMessage());
+                }
+                catch (\Exception $e) {
+                    $this->logger->error('[Bydn_ImprovedPageCache] - Error updating warm items: ' . $e->getMessage());
                 }
             }
         }
@@ -402,8 +404,9 @@ Class Publisher
             foreach ($chunks as $chunk) {
                 try {
                     $connection->insertMultiple($table, $chunk);
-                } catch (\Exception $e) {
-                    $this->logger->error($e->getMessage());
+                } 
+                catch (\Exception $e) {
+                    $this->logger->error('[Bydn_ImprovedPageCache] - Error inserting warm items: ' . $e->getMessage());
                 }
             }
         }

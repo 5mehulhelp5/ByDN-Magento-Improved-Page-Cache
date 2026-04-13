@@ -177,7 +177,7 @@ class Consumer
      */
     public function execute($minPriority = null, $maxPriority = null)
     {
-        $this->logger->info("Consumer execution started (min: " . ($minPriority ?? 'null') . ", max: " . ($maxPriority ?? 'null') . ")");
+        $this->logger->info("[Bydn_ImprovedPageCache] - Consumer execution started (min: " . ($minPriority ?? 'null') . ", max: " . ($maxPriority ?? 'null') . ")");
         
         // Check module is enabled
         if (!$this->helperConfig->isEnabled()) {
@@ -210,11 +210,10 @@ class Consumer
 
         $waitTime = $this->helperConfig->getWaitTime();
         if ($waitTime > 0) {
-            $this->logger->info(sprintf('Waiting %d milliseconds before next consumer run', $waitTime));
             usleep($waitTime * 1000);
         }
         
-        $this->logger->info("Consumer execution finished");
+        $this->logger->info("[Bydn_ImprovedPageCache] - Consumer execution finished");
     }
 
     /**
@@ -239,7 +238,7 @@ class Consumer
 
             // Generate URL
             $url = $this->generateUrl($item);
-            $this->logger->info('Generated URL: ' . (is_array($url) ? implode(', ', $url) : $url));
+            //$this->logger->info('Generated URL: ' . (is_array($url) ? implode(', ', $url) : $url));
 
             // No URL => error
             if (!$url) {
@@ -281,9 +280,9 @@ class Consumer
         try {
             $store = $this->storeManager->getStore($storeId);
 
-            $this->logger->info('Generate URL for item ' . $item->getId());
-            $this->logger->info('Item store: ' . $storeId);
-            $this->logger->info('Base URL: ' . $store->getBaseUrl());
+            //$this->logger->info('Generate URL for item ' . $item->getId());
+            //$this->logger->info('Item store: ' . $storeId);
+            //$this->logger->info('Base URL: ' . $store->getBaseUrl());
 
             // Store emulation
             $this->startEmulation($store);
@@ -338,8 +337,9 @@ class Consumer
             }
             $this->stopEmulation();
 
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+        }
+        catch (\Exception $e) {
+            $this->logger->error('[Bydn_ImprovedPageCache] - Error generating URL: ' . $e->getMessage());
         }
 
         return null;
@@ -412,7 +412,7 @@ class Consumer
         // Setup individual cURL handles for each URL and add them to the multi handle
         foreach ($urls as $index => $url) {
 
-            $this->logger->info('Warming Parallel: ' . $url);
+            //$this->logger->info('Warming Parallel: ' . $url);
 
             // Create handle and add to multiple
             $curlHandles[$index] = curl_init();
@@ -449,9 +449,9 @@ class Consumer
             
             // Log result
             if ($httpCode != 200) {
-                $this->logger->error('Error warming ' . $urls[$index] . ' (Status: ' . $httpCode . ')');
+                $this->logger->error('[Bydn_ImprovedPageCache] - Error warming ' . $urls[$index] . ' (Status: ' . $httpCode . ')');
             } else {
-                $this->logger->info('Done: ' . $urls[$index] . ' in ' . $totalTime . 's');
+                $this->logger->info('[Bydn_ImprovedPageCache] - Done: ' . $urls[$index] . ' in ' . $totalTime . 's');
             }
 
             // Remove the handle from the multi handle and close it
@@ -461,7 +461,7 @@ class Consumer
         // Close the multi handle itself
         curl_multi_close($multiHandle);
 
-        $this->logger->info('Batch done in: ' . $execution_time . ' seconds');
+        //$this->logger->info('Batch done in: ' . $execution_time . ' seconds');
 
         return $results;
     }
@@ -475,7 +475,7 @@ class Consumer
     private function warmUrl($url)
     {
         try {
-            $this->logger->info('Warming: ' . (is_array($url) ? implode(', ', $url) : $url));
+            //$this->logger->info('Warming: ' . (is_array($url) ? implode(', ', $url) : $url));
 
             $start_time = microtime(true);
             $this->curl->addHeader('X-Magento-Cache-Refresh', '1');
@@ -484,7 +484,7 @@ class Consumer
             $execution_time = ($end_time - $start_time);
             $httpCode = $this->curl->getStatus();
 
-            $this->logger->info('Done in ' . $execution_time . ' seconds');
+            //$this->logger->info('Done in ' . $execution_time . ' seconds');
 
             return [
                 'status' => ($httpCode == 200),
@@ -493,7 +493,7 @@ class Consumer
             ];
         }
         catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error('[Bydn_ImprovedPageCache] - Error warming URL: ' . $e->getMessage());
             return [
                 'status' => false,
                 'http_code' => 0,

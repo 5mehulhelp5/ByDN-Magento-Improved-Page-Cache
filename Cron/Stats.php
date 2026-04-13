@@ -77,8 +77,9 @@ class Stats
             $stats->setErrorItems($errorCount);
 
             $this->warmStatsResource->save($stats);
-        } catch (\Exception $e) {
-            $this->logger->error('Error in Bydn\ImprovedPageCache\Cron\Stats: ' . $e->getMessage());
+        }
+        catch (\Exception $e) {
+            $this->logger->error('[Bydn_ImprovedPageCache] - Error in Bydn\ImprovedPageCache\Cron\Stats: ' . $e->getMessage());
         }
     }
 
